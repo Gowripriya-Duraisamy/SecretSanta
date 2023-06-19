@@ -7,6 +7,7 @@
     "startDev": "nodemon -V --exec ts-node src/index.ts"
   },
   "dependencies": {
+    "csvtojson": "^2.0.10",
     "express": "^4.18.2",
     "multer": "^1.4.5-lts.1",
     "xlsx": "^0.18.5"

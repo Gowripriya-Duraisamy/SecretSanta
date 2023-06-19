@@ -1,8 +1,9 @@
-import XLSX from "xlsx";
-import { Employee, Input, Result } from "../types/santa";
 import path from "path";
+import XLSX from "xlsx";
+import csv from "csvtojson"
+import { Employee, Input, Result } from "../types/santa";
 
-export const fileConv = (file: Express.Multer.File) => {
+export const XLSXfileConv = (file: Express.Multer.File) => {
   try {
     const workbook = XLSX.read(file.buffer, { type: "buffer" });
     const sheet_name_list = workbook.SheetNames;
@@ -19,7 +20,19 @@ export const fileConv = (file: Express.Multer.File) => {
       file: XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]),
     };
   } catch (error) {
-    console.log(error);
+    throw new Error("Please provide valid Input file");
+  }
+};
+
+export const CSVfileConv = async (file: Express.Multer.File) => {
+  try {
+    const list = await csv().fromString(file.buffer.toString());
+    const name = file.originalname.includes("Employee-List")
+    ? "Employee"
+    : "Result";
+    return {name, file:list};
+  } catch (error) {
+    throw new Error("Please provide valid Input file");
   }
 };
 
@@ -62,7 +75,6 @@ export const constructOutputExcel = (list: Input[]) => {
   employeeList.forEach((data) => {
     employeeNameEmailMap.set(data.Employee_EmailID, data.Employee_Name);
   });
-
   // Looping employees and assigning the secret child for employee based upon the constraints
   return employeeList.map((employee) => {
     const excludeEmail = previousSantaMap.get(employee.Employee_EmailID);
@@ -75,7 +87,6 @@ export const constructOutputExcel = (list: Input[]) => {
         emailList[i] !== employee.Employee_EmailID
       ) {
         removeIndex = i;
-        secretChild = emailList[i];
         break;
       }
     }
@@ -87,7 +98,8 @@ export const constructOutputExcel = (list: Input[]) => {
       ];
     }
     // removing the assigned secret child
-    emailList.pop();
+    secretChild = emailList.pop();
+    
     return {
       Employee_Name: employee.Employee_Name,
       Employee_EmailID: employee.Employee_EmailID,
